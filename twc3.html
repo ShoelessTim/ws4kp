@@ -13,6 +13,15 @@
     <script type="text/javascript" src="Scripts/jeoquery.js"></script>
     <script type="text/javascript" src="Scripts/Timer.js?v=75"></script>
     <script type="text/javascript" src="Scripts/metars.js"></script>
+    <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+    <script type="text/javascript">
+        document.addEventListener('musickitloaded', function () {
+            MusicKit.configure({
+                developerToken: window.localStorage.getItem('AppleMusicDeveloperToken') || '',
+                app: { name: 'WeatherStar4000+', build: '1.0' }
+            });
+        });
+    </script>
     <!--<script type="text/javascript" src="Scripts/timemachine.min.js"></script>-->
     <script type="text/javascript" src="Scripts/twc3.js?v=75"></script>
 </head>

@@ -55,6 +55,10 @@ Then use a browser to access the site by navigating to the `index.html` page.
 
 NOTE: The GPS function will not work in Chrome 50 or later if the site is not using an SSL certificate.
 
+### Apple Music
+
+To use Apple Music for background audio you must provide a valid Apple Music developer token. Store the token in browser local storage under `AppleMusicDeveloperToken`. After selecting **Apple Music** from the Music Source options, the browser will prompt you to sign in before playback begins.
+
 ### CORS
 
 The design of this site was to have as little back end logic on the server side as possible. However weather.gov has too many issues with cross-origin resource sharing (CORS).  In order to work around CORS prevention in most browsers the AJAX calls go through a server first acting as a middle man which sends the request to weather.gov and the response back to the end user.

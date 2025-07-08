@@ -217,6 +217,10 @@ var _AudioPlayInterval = 100;
 var _AudioFadeOutIntervalId = null;
 var _MusicUrls = [];
 var _MusicUrlsTemp = [];
+var MusicSources = { LOCAL: 'LOCAL', APPLE: 'APPLE' };
+var _MusicSource = MusicSources.LOCAL;
+var _MusicKitPlayer = null;
+var _ApplePlaylistId = null;
 var audMusic = null;
 var _AudioContext = null;
 var _AudioBufferSource = null;
@@ -3356,7 +3360,9 @@ $(function ()
     canvasLatestObservations = $("#canvasLatestObservations");
 
     audMusic = $("#audMusic");
-    PopulateMusicUrls();
+    if (_MusicSource == MusicSources.LOCAL) {
+        PopulateMusicUrls();
+    }
     //audMusic[0].onerror = audMusic_OnError;
     //audMusic[0].ontimeupdate = AudioOnTimeUpdate;
     //audMusic[0].onplay = RefreshStateOfMusicAudio;
@@ -13402,6 +13408,33 @@ var AssignThemes = function (e)
     RefreshSegments();
 };
 
+var AssignMusicSource = function (e)
+{
+    switch (e.Source)
+    {
+        case 'APPLE':
+            _MusicSource = MusicSources.APPLE;
+            if (e.PlaylistId)
+            {
+                _ApplePlaylistId = e.PlaylistId;
+            }
+            if (window.MusicKit)
+            {
+                _MusicKitPlayer = MusicKit.getInstance();
+                if (_ApplePlaylistId)
+                {
+                    _MusicKitPlayer.setQueue({ playlist: _ApplePlaylistId });
+                }
+            }
+            break;
+        default:
+            _MusicSource = MusicSources.LOCAL;
+            PopulateMusicUrls();
+            break;
+    }
+    RefreshStateOfMusicAudio();
+};
+
 var RefreshSegments = function ()
 {
     _DontLoadGifs = true;
@@ -13439,6 +13472,40 @@ var AudioPlayToggle = function ()
 {
     //var audio = $("#audMusic")[0];
 
+    if (_MusicSource == MusicSources.APPLE)
+    {
+        if (!_MusicKitPlayer && window.MusicKit)
+        {
+            _MusicKitPlayer = MusicKit.getInstance();
+        }
+
+        if (!_MusicKitPlayer)
+            return;
+
+        if (_IsAudioPlaying)
+        {
+            _MusicKitPlayer.pause();
+            _IsAudioPlaying = false;
+        }
+        else
+        {
+            if (!_MusicKitPlayer.player.queue.items.length && _ApplePlaylistId)
+            {
+                _MusicKitPlayer.setQueue({ playlist: _ApplePlaylistId }).then(function () {
+                    _MusicKitPlayer.play();
+                });
+            }
+            else
+            {
+                _MusicKitPlayer.play();
+            }
+            _IsAudioPlaying = true;
+        }
+
+        if (_CallBack) _CallBack({ Status: "ISAUDIOPLAYING", Value: _IsAudioPlaying });
+        return;
+    }
+
     _IsAudioPlaying = !(_IsAudioPlaying);
 
     if (_IsAudioPlaying == true)
@@ -13455,16 +13522,11 @@ var AudioPlayToggle = function ()
 
             if (_AudioContext == null && audMusic.attr("src") == "")
             {
-                ////audio.src = "Audio/Andrew Korus - Hello There.mp3";
-                //audio.src = GetNextMusicUrl();
-                //audio.load();
                 LoadAudio(GetNextMusicUrl());
                 return;
             }
-            //audio.volume = 1.0;
-            //audio.play();
+
             PlayAudio();
-            //RefreshStateOfMusicAudio();
 
             if (_BeepRefreshIntervalId)
             {
@@ -13481,7 +13543,6 @@ var AudioPlayToggle = function ()
             _AudioPlayIntervalId = null;
         }
 
-        //audio.pause();
         PauseAudio();
 
         if (_BeepRefreshIntervalId)
@@ -13508,7 +13569,14 @@ var RefreshStateOfMusicAudio = function ()
 {
     var IsAudioPlaying = _IsAudioPlaying;
 
-    if (window.AudioContext)
+    if (_MusicSource == MusicSources.APPLE)
+    {
+        if (_MusicKitPlayer)
+        {
+            _IsAudioPlaying = !_MusicKitPlayer.player.paused;
+        }
+    }
+    else if (window.AudioContext)
     {
         _IsAudioPlaying = (_AudioContext.state == "running" && _AudioDuration != 0);
     }
@@ -13526,16 +13594,21 @@ var RefreshStateOfMusicAudio = function ()
 
 var AudioOnTimeUpdate = function ()
 {
-    if (window.AudioContext)
+    if (_MusicSource == MusicSources.APPLE)
+    {
+        if (_MusicKitPlayer)
+        {
+            _AudioCurrentTime = _MusicKitPlayer.player.currentPlaybackTime;
+            _AudioDuration = _MusicKitPlayer.player.currentPlaybackDuration;
+        }
+    }
+    else if (window.AudioContext)
     {
         _AudioCurrentTime = _AudioContext.currentTime;
     }
     else
     {
-        //audio.currentTime
         var audio = audMusic[0];
-
-        //console.log(audio.currentTime.toString() + " " + audio.duration.toString());
         _AudioCurrentTime = audio.currentTime;
     }
     //console.log(_AudioCurrentTime.toString() + " " + _AudioDuration.toString());
@@ -13639,6 +13712,8 @@ var AudioOnTimeUpdate = function ()
 
 var PopulateMusicUrls = function ()
 {
+    if (_MusicSource != MusicSources.LOCAL) return;
+
     _MusicUrls = [];
     _MusicUrls.push("Audio/Andrew Korus - Hello There.mp3");
     _MusicUrls.push("Audio/Ficara - Stormy Weather.mp3");
@@ -13725,6 +13800,7 @@ var GetNextMusicUrl = function ()
 
 var LoadAudio = function(Url)
 {
+    if (_MusicSource != MusicSources.LOCAL) return;
     if (_AudioRefreshIntervalId)
     {
         window.clearIntervalWorker(_AudioRefreshIntervalId);
@@ -13823,6 +13899,11 @@ var LoadAudio = function(Url)
 };
 var PlayAudio = function()
 {
+    if (_MusicSource == MusicSources.APPLE)
+    {
+        if (_MusicKitPlayer) _MusicKitPlayer.play();
+        return;
+    }
     if (window.AudioContext)
     {
         if (_AudioDuration != 0)
@@ -13839,6 +13920,11 @@ var PlayAudio = function()
 };
 var PauseAudio = function()
 {
+    if (_MusicSource == MusicSources.APPLE)
+    {
+        if (_MusicKitPlayer) _MusicKitPlayer.pause();
+        return;
+    }
     if (window.AudioContext)
     {
         if (_AudioDuration != 0)
@@ -13856,6 +13942,19 @@ var PauseAudio = function()
 var VolumeAudio = function(vol)
 {
     var volume = -1;
+
+    if (_MusicSource == MusicSources.APPLE)
+    {
+        if (_MusicKitPlayer)
+        {
+            if (vol != undefined)
+            {
+                _MusicKitPlayer.player.volume = vol;
+            }
+            volume = _MusicKitPlayer.player.volume;
+        }
+        return volume;
+    }
 
     if (window.AudioContext)
     {
