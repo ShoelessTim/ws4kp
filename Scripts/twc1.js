@@ -2029,7 +2029,7 @@ var WeatherLocalForecast = function (WeatherForecastParser)
 
     $(WeatherForecastParser.Text).each(function (Index, Text)
     {
-        if (Index > 2)
+        if (Index > 4)
         {
             return false;
         }
@@ -2068,10 +2068,19 @@ if (!String.prototype.endsWith)
 
 var PopulateLocalForecast = function (WeatherLocalForecast)
 {
-    $(WeatherLocalForecast.Conditions).each(function (Index, Condition)
+    for (var Index = 0; Index < 5; Index++)
     {
-        $("#divLocalForecast" + (Index + 1)).html(Condition.DayName.toUpperCase() + "..." + Condition.Text.toUpperCase());
-    });
+        var div = $("#divLocalForecast" + (Index + 1));
+        if (Index < WeatherLocalForecast.Conditions.length)
+        {
+            var Condition = WeatherLocalForecast.Conditions[Index];
+            div.html(Condition.DayName.toUpperCase() + "..." + Condition.Text.toUpperCase());
+        }
+        else
+        {
+            div.html("");
+        }
+    }
 };
 
 var WeatherHazardsParser = function (html)
