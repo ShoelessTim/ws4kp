@@ -36,6 +36,22 @@ This project was originally created by Mike Battaglia in the Fall of 2016 becaus
 
 It is recommended that you download all of the source code to a folder and use Internet Information Services (IIS) 7.5 or later with ASP .NET 4.5 or later to create a virtual directory which points to this folder.
 
+### Running on macOS
+
+If you would like to run the project locally on a Mac without IIS you can use the
+provided Node.js server.  Install [Node.js](https://nodejs.org/) and then run the
+following commands from the project folder:
+
+```bash
+npm install
+npm start
+```
+
+The server will start on `http://localhost:8080`.  Open `index.html` in your
+browser or navigate to the above URL to use the site.  The Node server exposes a
+`/cors` endpoint that mirrors the behaviour of the original ASP.NET page so the
+application works without additional configuration.
+
 Please refer to the instructions here: https://github.com/vbguyny/ws4kp/blob/master/HowToInstall.txt
 
 If you plan on exposing this site publicly, you will need to update the code in `CORS/Default.aspx` to have your public IP address and domain name:
