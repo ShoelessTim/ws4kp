@@ -57,6 +57,9 @@ var btnScrollRss;
 
 var chkScrollHazardText;
 
+var radMusicLocal;
+var radMusicApple;
+
 //var _InFullScreen = false;
 var _AutoSelectQuery = false;
 var _TwcDataUrl = "";
@@ -610,6 +613,23 @@ var Themes = {
     ThemeD: 4, // Dark
 };
 var _Themes = Themes.ThemeA;
+
+var MusicSources = {
+    LOCAL: 'LOCAL',
+    APPLE: 'APPLE'
+};
+var _MusicSource = MusicSources.LOCAL;
+
+var AssignMusicSource = function (e) {
+    switch (e.Source) {
+        case 'APPLE':
+            _MusicSource = MusicSources.APPLE;
+            break;
+        default:
+            _MusicSource = MusicSources.LOCAL;
+            break;
+    }
+};
 
 var AssignThemes = function (e)
 {
@@ -1536,6 +1556,16 @@ $(function ()
     }
     AssignThemes({ Themes: TwcThemes });
 
+    var TwcMusicSource = localStorage.getItem("TwcMusicSource");
+    if (!TwcMusicSource || TwcMusicSource == "LOCAL") {
+        $("#radMusicLocal").prop("checked", "checked");
+        TwcMusicSource = "LOCAL";
+    } else if (TwcMusicSource == "APPLE") {
+        $("#radMusicApple").prop("checked", "checked");
+    }
+    AssignMusicSource({ Source: TwcMusicSource });
+    iframeTwc[0].contentWindow.AssignMusicSource({ Source: TwcMusicSource });
+
     $("input[type='radio'][name='radUnits']").on("change", function ()
     {
         var Units = $(this).val();
@@ -1593,6 +1623,16 @@ $(function ()
     spanZoneId = $("#spanZoneId");
 
     chkScrollHazardText = $("#chkScrollHazardText");
+
+    radMusicLocal = $("#radMusicLocal");
+    radMusicApple = $("#radMusicApple");
+
+    $("input[type='radio'][name='radMusicSource']").on("change", function () {
+        var source = $(this).val();
+        localStorage.setItem("TwcMusicSource", source);
+        AssignMusicSource({ Source: source });
+        iframeTwc[0].contentWindow.AssignMusicSource({ Source: source });
+    });
     chkScrollHazardText.on("change", function ()
     {
         var Checked = $(this).is(":checked");
